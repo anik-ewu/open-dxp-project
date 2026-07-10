@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+
+# Rider / VS
+.idea/
+.vs/
+
+# Docker
+docker-compose.override.yml
+
+# Environment / secrets
+.env
+.env.local
+*.pfx
+
+# OS
+.DS_Store
+Thumbs.db
