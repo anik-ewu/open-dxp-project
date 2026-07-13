@@ -1,0 +1,44 @@
+<div class="page-editor">
+  <a routerLink="/">&larr; Back to pages</a>
+
+  <h2>{{ pageId ? 'Edit page' : 'New page' }}</h2>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  <label>
+    Slug
+    <input [(ngModel)]="slug" name="slug" placeholder="about-us" [disabled]="!!pageId" />
+  </label>
+
+  <label>
+    Title
+    <input [(ngModel)]="title" name="title" />
+  </label>
+
+  <label>
+    Blocks (JSON)
+    <textarea [(ngModel)]="blocksJson" name="blocksJson" rows="10"></textarea>
+  </label>
+
+  <div class="actions">
+    <button type="button" (click)="save()" [disabled]="saving">Save draft</button>
+    @if (pageId) {
+      <button type="button" (click)="publish()">Publish</button>
+    }
+  </div>
+
+  @if (status) {
+    <p>Status: {{ status }}</p>
+  }
+
+  @if (versions.length > 0) {
+    <h3>Version history</h3>
+    <ul>
+      @for (version of versions; track version.id) {
+        <li>v{{ version.versionNumber }} — {{ version.title }} — {{ version.publishedAt | date: 'short' }}</li>
+      }
+    </ul>
+  }
+</div>

@@ -1,0 +1,33 @@
+<div class="page-list">
+  <header>
+    <h2>Pages</h2>
+    <a routerLink="/pages/new">+ New page</a>
+  </header>
+
+  @if (loading) {
+    <p>Loading...</p>
+  } @else if (pages.length === 0) {
+    <p>No pages yet.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (page of pages; track page.id) {
+          <tr>
+            <td><a [routerLink]="['/pages', page.id]">{{ page.title }}</a></td>
+            <td>{{ page.slug }}</td>
+            <td>{{ page.status }}</td>
+            <td>{{ page.updatedAt | date: 'short' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
