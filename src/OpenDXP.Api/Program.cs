@@ -17,6 +17,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreatePageCommand>());
 builder.Services.AddInfrastructure(builder.Configuration);
 
+const string AdminUiCorsPolicy = "AdminUi";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                      ?? ["http://localhost:4200"];
+builder.Services.AddCors(options =>
+    options.AddPolicy(AdminUiCorsPolicy, policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -35,6 +41,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseCors(AdminUiCorsPolicy);
 
 app.UseAuthorization();
 

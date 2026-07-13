@@ -9,6 +9,7 @@ public class PageVersionConfiguration : IEntityTypeConfiguration<PageVersion>
     public void Configure(EntityTypeBuilder<PageVersion> builder)
     {
         builder.HasKey(v => v.Id);
+        builder.Property(v => v.Id).ValueGeneratedNever();
 
         builder.Property(v => v.Title)
             .IsRequired()
