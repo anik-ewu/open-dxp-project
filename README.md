@@ -41,7 +41,7 @@ docker compose up
 Each phase is a working, demoable increment.
 
 - [x] **Phase 0 — Foundation.** Clean Architecture solution, Angular admin shell, Docker Compose, CI.
-- [ ] **Phase 1 — Core CMS.** Content types/blocks/pages, draft→publish workflow with versioning, REST content delivery API.
+- [x] **Phase 1 — Core CMS.** Content types/blocks/pages, draft→publish workflow with versioning, REST content delivery API.
 - [ ] **Phase 2 — Auth & Authorization.** OIDC login (Duende IdentityServer), access/refresh token rotation, RBAC → policy-based → multi-tenant claims authorization, MFA, audit logging.
 - [ ] **Phase 3 — Event-driven backbone.** Kafka with transactional outbox; domain events drive cache invalidation, search re-indexing, audit trail.
 - [ ] **Phase 4 — DXP: personalization & experimentation.** Audience segmentation, targeting rules on content blocks, A/B testing, analytics dashboard.
