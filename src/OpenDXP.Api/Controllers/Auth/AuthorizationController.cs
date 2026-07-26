@@ -4,6 +4,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OpenDXP.Infrastructure.Identity;
 using OpenIddict.Abstractions;
@@ -57,6 +58,7 @@ public class AuthorizationController(UserManager<ApplicationUser> userManager) :
     }
 
     [HttpPost("~/connect/token")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Exchange()
     {
         var request = HttpContext.GetOpenIddictServerRequest()

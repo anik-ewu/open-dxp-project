@@ -1,6 +1,8 @@
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Infrastructure.Identity;
 
 namespace OpenDXP.Api.Controllers.Auth;
@@ -11,7 +13,7 @@ namespace OpenDXP.Api.Controllers.Auth;
 /// </summary>
 [ApiController]
 [Route("account")]
-public class AccountController(SignInManager<ApplicationUser> signInManager) : ControllerBase
+public class AccountController(SignInManager<ApplicationUser> signInManager, IAuditLogService auditLog) : ControllerBase
 {
     [HttpGet("login")]
     public IActionResult Login([FromQuery] string? returnUrl)
@@ -20,18 +22,24 @@ public class AccountController(SignInManager<ApplicationUser> signInManager) : C
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IActionResult> LoginPost(
         [FromForm] string email, [FromForm] string password, [FromForm] string? returnUrl)
     {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
 
         if (!result.Succeeded)
         {
+            var eventType = result.IsLockedOut ? "AccountLocked" : "LoginFailed";
+            await auditLog.LogAsync(eventType, email, $"Login attempt for '{email}' failed.", ipAddress);
+
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Content(BuildLoginPage(returnUrl, error), "text/html");
         }
 
+        await auditLog.LogAsync("LoginSucceeded", email, $"'{email}' signed in.", ipAddress);
         return Redirect(returnUrl ?? "/");
     }
 

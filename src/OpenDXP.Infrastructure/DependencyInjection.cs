@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Application.Content;
+using OpenDXP.Infrastructure.Auditing;
 using OpenDXP.Infrastructure.Persistence;
 
 namespace OpenDXP.Infrastructure;
@@ -17,6 +19,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IPageRepository, PageRepository>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
 
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<OpenDxpDbContext>());

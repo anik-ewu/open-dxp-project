@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using OpenDXP.Api.Authorization;
 using OpenDXP.Api.Middleware;
 using OpenDXP.Application.Common.Security;
@@ -12,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+
+const string AuthRateLimiterPolicy = "auth";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +93,23 @@ builder.Services.AddOpenIddict()
 builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.MustOwnResource, policy => policy.Requirements.Add(new PageOwnershipRequirement())));
 builder.Services.AddSingleton<IAuthorizationHandler, PageOwnershipAuthorizationHandler>();
+
+// Defense in depth alongside Identity's account lockout: caps login/token attempts per client IP,
+// independent of which account is being targeted (lockout is per-account).
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(AuthRateLimiterPolicy, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+    options.OnRejected = (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        return new ValueTask();
+    };
+});
 
 const string AdminUiCorsPolicy = "AdminUi";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -193,6 +214,8 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseCors(AdminUiCorsPolicy);
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
