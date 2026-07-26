@@ -109,19 +109,28 @@ using (var scope = app.Services.CreateScope())
     }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    const string demoAdminEmail = "admin@opendxp.local";
-    if (await userManager.FindByEmailAsync(demoAdminEmail) is null)
+
+    async Task SeedDemoUserAsync(string email, string displayName, string role)
     {
-        var demoAdmin = new ApplicationUser
+        if (await userManager.FindByEmailAsync(email) is not null)
         {
-            UserName = demoAdminEmail,
-            Email = demoAdminEmail,
-            DisplayName = "Demo Admin",
+            return;
+        }
+
+        var demoUser = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            DisplayName = displayName,
             EmailConfirmed = true
         };
-        await userManager.CreateAsync(demoAdmin, "ChangeMe123!");
-        await userManager.AddToRoleAsync(demoAdmin, Roles.Admin);
+        await userManager.CreateAsync(demoUser, "ChangeMe123!");
+        await userManager.AddToRoleAsync(demoUser, role);
     }
+
+    await SeedDemoUserAsync("admin@opendxp.local", "Demo Admin", Roles.Admin);
+    await SeedDemoUserAsync("editor@opendxp.local", "Demo Editor", Roles.Editor);
+    await SeedDemoUserAsync("viewer@opendxp.local", "Demo Viewer", Roles.Viewer);
 
     var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
     if (await scopeManager.FindByNameAsync("opendxp-api") is null)

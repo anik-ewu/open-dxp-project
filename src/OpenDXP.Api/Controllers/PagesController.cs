@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OpenDXP.Application.Common.Security;
 using OpenDXP.Application.Content.Commands;
 using OpenDXP.Application.Content.Dtos;
 using OpenDXP.Application.Content.Queries;
@@ -8,6 +10,7 @@ namespace OpenDXP.Api.Controllers;
 
 [ApiController]
 [Route("api/pages")]
+[Authorize]
 public class PagesController(ISender mediator) : ControllerBase
 {
     [HttpGet]
@@ -25,6 +28,7 @@ public class PagesController(ISender mediator) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = $"{Roles.Editor},{Roles.Admin}")]
     public async Task<ActionResult<PageDetailDto>> Create(CreatePageRequest request, CancellationToken cancellationToken)
     {
         var page = await mediator.Send(
@@ -33,6 +37,7 @@ public class PagesController(ISender mediator) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = $"{Roles.Editor},{Roles.Admin}")]
     public async Task<ActionResult<PageDetailDto>> UpdateDraft(
         Guid id, UpdatePageDraftRequest request, CancellationToken cancellationToken)
     {
@@ -42,6 +47,7 @@ public class PagesController(ISender mediator) : ControllerBase
     }
 
     [HttpPost("{id:guid}/publish")]
+    [Authorize(Roles = $"{Roles.Editor},{Roles.Admin}")]
     public async Task<ActionResult<PageVersionDto>> Publish(Guid id, CancellationToken cancellationToken)
     {
         var version = await mediator.Send(new PublishPageCommand(id), cancellationToken);
