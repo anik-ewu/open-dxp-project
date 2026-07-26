@@ -13,6 +13,7 @@ public class Page
     public PageStatus Status { get; private set; }
     public int LatestVersionNumber { get; private set; }
     public Guid? PublishedVersionId { get; private set; }
+    public Guid OwnerId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -23,7 +24,7 @@ public class Page
     {
     }
 
-    public static Page CreateDraft(string slug, string title, string blocksJson)
+    public static Page CreateDraft(string slug, string title, string blocksJson, Guid ownerId)
     {
         if (string.IsNullOrWhiteSpace(slug))
         {
@@ -44,6 +45,7 @@ public class Page
             BlocksJson = string.IsNullOrWhiteSpace(blocksJson) ? "[]" : blocksJson,
             Status = PageStatus.Draft,
             LatestVersionNumber = 0,
+            OwnerId = ownerId,
             CreatedAt = now,
             UpdatedAt = now
         };

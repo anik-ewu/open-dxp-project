@@ -19,5 +19,6 @@ public static class PageMappingExtensions
             page.BlocksJson,
             page.Status.ToString(),
             page.LatestVersionNumber,
+            page.OwnerId,
             page.Versions.OrderByDescending(v => v.VersionNumber).Select(v => v.ToDto()).ToList());
 }

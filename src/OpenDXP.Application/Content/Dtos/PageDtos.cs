@@ -1,3 +1,5 @@
+using OpenDXP.Application.Common.Security;
+
 namespace OpenDXP.Application.Content.Dtos;
 
 public record PageSummaryDto(Guid Id, string Slug, string Title, string Status, DateTimeOffset UpdatedAt);
@@ -11,6 +13,7 @@ public record PageDetailDto(
     string BlocksJson,
     string Status,
     int LatestVersionNumber,
-    IReadOnlyList<PageVersionDto> Versions);
+    Guid OwnerId,
+    IReadOnlyList<PageVersionDto> Versions) : IOwnedResource;
 
 public record PublishedPageDto(string Slug, string Title, string BlocksJson, int VersionNumber, DateTimeOffset PublishedAt);

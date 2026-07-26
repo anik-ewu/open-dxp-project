@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using OpenDXP.Api.Authorization;
 using OpenDXP.Api.Middleware;
 using OpenDXP.Application.Common.Security;
 using OpenDXP.Application.Content.Commands;
@@ -84,7 +86,9 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy(Policies.MustOwnResource, policy => policy.Requirements.Add(new PageOwnershipRequirement())));
+builder.Services.AddSingleton<IAuthorizationHandler, PageOwnershipAuthorizationHandler>();
 
 const string AdminUiCorsPolicy = "AdminUi";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -130,6 +134,7 @@ using (var scope = app.Services.CreateScope())
 
     await SeedDemoUserAsync("admin@opendxp.local", "Demo Admin", Roles.Admin);
     await SeedDemoUserAsync("editor@opendxp.local", "Demo Editor", Roles.Editor);
+    await SeedDemoUserAsync("editor2@opendxp.local", "Demo Editor Two", Roles.Editor);
     await SeedDemoUserAsync("viewer@opendxp.local", "Demo Viewer", Roles.Viewer);
 
     var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();

@@ -5,7 +5,7 @@ using OpenDXP.Domain.Content;
 
 namespace OpenDXP.Application.Content.Commands;
 
-public record CreatePageCommand(string Slug, string Title, string BlocksJson) : IRequest<PageDetailDto>;
+public record CreatePageCommand(string Slug, string Title, string BlocksJson, Guid OwnerId) : IRequest<PageDetailDto>;
 
 public class CreatePageCommandHandler(IPageRepository repository) : IRequestHandler<CreatePageCommand, PageDetailDto>
 {
@@ -16,7 +16,7 @@ public class CreatePageCommandHandler(IPageRepository repository) : IRequestHand
             throw new DuplicateSlugException(request.Slug);
         }
 
-        var page = Page.CreateDraft(request.Slug, request.Title, request.BlocksJson);
+        var page = Page.CreateDraft(request.Slug, request.Title, request.BlocksJson, request.OwnerId);
         repository.Add(page);
         await repository.SaveChangesAsync(cancellationToken);
 

@@ -4,15 +4,18 @@ namespace OpenDXP.UnitTests.Domain;
 
 public class PageTests
 {
+    private static readonly Guid OwnerId = Guid.NewGuid();
+
     [Fact]
     public void CreateDraft_StartsInDraftStatusWithNoVersions()
     {
-        var page = Page.CreateDraft("about-us", "About Us", "[]");
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
 
         Assert.Equal(PageStatus.Draft, page.Status);
         Assert.Equal(0, page.LatestVersionNumber);
         Assert.Null(page.PublishedVersionId);
         Assert.Empty(page.Versions);
+        Assert.Equal(OwnerId, page.OwnerId);
     }
 
     [Theory]
@@ -20,19 +23,19 @@ public class PageTests
     [InlineData(" ", "Title")]
     public void CreateDraft_ThrowsOnMissingSlug(string slug, string title)
     {
-        Assert.Throws<ArgumentException>(() => Page.CreateDraft(slug, title, "[]"));
+        Assert.Throws<ArgumentException>(() => Page.CreateDraft(slug, title, "[]", OwnerId));
     }
 
     [Fact]
     public void CreateDraft_ThrowsOnMissingTitle()
     {
-        Assert.Throws<ArgumentException>(() => Page.CreateDraft("about-us", "", "[]"));
+        Assert.Throws<ArgumentException>(() => Page.CreateDraft("about-us", "", "[]", OwnerId));
     }
 
     [Fact]
     public void UpdateDraft_ChangesTitleAndBlocksWithoutCreatingAVersion()
     {
-        var page = Page.CreateDraft("about-us", "About Us", "[]");
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
 
         page.UpdateDraft("About Us (v2)", "[{\"type\":\"heading\"}]");
 
@@ -45,7 +48,7 @@ public class PageTests
     [Fact]
     public void Publish_SnapshotsDraftIntoFirstVersionAndMarksPagePublished()
     {
-        var page = Page.CreateDraft("about-us", "About Us", "[]");
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
 
         var version = page.Publish();
 
@@ -59,7 +62,7 @@ public class PageTests
     [Fact]
     public void Publish_TwiceAppendsANewVersionInsteadOfOverwritingHistory()
     {
-        var page = Page.CreateDraft("about-us", "About Us", "[]");
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
         var firstVersion = page.Publish();
 
         page.UpdateDraft("About Us (updated)", "[{\"type\":\"heading\"}]");
@@ -76,7 +79,7 @@ public class PageTests
     [Fact]
     public void UpdateDraft_AfterPublishDoesNotMutatePublishedVersionSnapshot()
     {
-        var page = Page.CreateDraft("about-us", "About Us", "[]");
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
         var version = page.Publish();
 
         page.UpdateDraft("Changed after publish", "[{\"type\":\"paragraph\"}]");
