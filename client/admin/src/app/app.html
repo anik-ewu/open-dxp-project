@@ -1,5 +1,12 @@
 <header class="app-header">
   <h1>OpenDXP Admin</h1>
+
+  @if (isAuthenticated) {
+    <span>{{ userProfile?.name }} ({{ userProfile?.roles?.join(', ') }})</span>
+    <button type="button" (click)="logout()">Log out</button>
+  } @else {
+    <button type="button" (click)="login()">Log in</button>
+  }
 </header>
 
 <main class="app-content">
