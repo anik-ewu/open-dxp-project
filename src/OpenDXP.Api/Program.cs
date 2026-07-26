@@ -7,6 +7,9 @@ using OpenDXP.Infrastructure;
 using OpenDXP.Infrastructure.Identity;
 using OpenDXP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.Abstractions;
+using OpenIddict.Validation.AspNetCore;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,58 @@ builder.Services
     .AddEntityFrameworkStores<OpenDxpDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+});
+
+builder.Services.AddOpenIddict()
+    .AddServer(options =>
+    {
+        options.SetAuthorizationEndpointUris("connect/authorize")
+               .SetTokenEndpointUris("connect/token")
+               .SetUserInfoEndpointUris("connect/userinfo");
+
+        options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
+        options.AllowRefreshTokenFlow();
+
+        options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles, Scopes.OfflineAccess, "opendxp-api");
+
+        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
+        options.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+
+        // Development-only certificates. Production needs real signing/encryption keys (Phase 6/7 concern).
+        options.AddDevelopmentEncryptionCertificate()
+               .AddDevelopmentSigningCertificate();
+
+        // UserInfo has no passthrough: OpenIddict answers it directly from the claims embedded
+        // in the access token (see AuthorizationController's SetDestinations), no controller needed.
+        var aspNetCoreServerBuilder = options.UseAspNetCore()
+               .EnableAuthorizationEndpointPassthrough()
+               .EnableTokenEndpointPassthrough()
+               .EnableStatusCodePagesIntegration();
+
+        // Local HTTP-only dev containers have no TLS in front of them; never disable this in production.
+        if (builder.Environment.IsDevelopment())
+        {
+            aspNetCoreServerBuilder.DisableTransportSecurityRequirement();
+        }
+    })
+    .AddValidation(options =>
+    {
+        options.UseLocalServer();
+        options.UseAspNetCore();
+    });
+
+builder.Services.AddAuthorization();
+
 const string AdminUiCorsPolicy = "AdminUi";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
                       ?? ["http://localhost:4200"];
@@ -52,6 +107,64 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new ApplicationRole(roleName));
         }
     }
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    const string demoAdminEmail = "admin@opendxp.local";
+    if (await userManager.FindByEmailAsync(demoAdminEmail) is null)
+    {
+        var demoAdmin = new ApplicationUser
+        {
+            UserName = demoAdminEmail,
+            Email = demoAdminEmail,
+            DisplayName = "Demo Admin",
+            EmailConfirmed = true
+        };
+        await userManager.CreateAsync(demoAdmin, "ChangeMe123!");
+        await userManager.AddToRoleAsync(demoAdmin, Roles.Admin);
+    }
+
+    var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
+    if (await scopeManager.FindByNameAsync("opendxp-api") is null)
+    {
+        await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
+        {
+            Name = "opendxp-api",
+            Resources = { "opendxp-api" }
+        });
+    }
+
+    var applicationManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+    var angularAdminDescriptor = new OpenIddictApplicationDescriptor
+    {
+        ClientId = "angular-admin",
+        ClientType = ClientTypes.Public,
+        RedirectUris = { new Uri("http://localhost:4200/auth-callback") },
+        PostLogoutRedirectUris = { new Uri("http://localhost:4200") },
+        Permissions =
+        {
+            Permissions.Endpoints.Authorization,
+            Permissions.Endpoints.Token,
+            Permissions.GrantTypes.AuthorizationCode,
+            Permissions.GrantTypes.RefreshToken,
+            Permissions.ResponseTypes.Code,
+            Permissions.Scopes.Email,
+            Permissions.Scopes.Profile,
+            Permissions.Scopes.Roles,
+            Permissions.Prefixes.Scope + Scopes.OfflineAccess,
+            Permissions.Prefixes.Scope + "opendxp-api"
+        },
+        Requirements = { Requirements.Features.ProofKeyForCodeExchange }
+    };
+
+    var existingApplication = await applicationManager.FindByClientIdAsync("angular-admin");
+    if (existingApplication is null)
+    {
+        await applicationManager.CreateAsync(angularAdminDescriptor);
+    }
+    else
+    {
+        await applicationManager.UpdateAsync(existingApplication, angularAdminDescriptor);
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -67,6 +180,7 @@ app.UseHttpsRedirection();
 
 app.UseCors(AdminUiCorsPolicy);
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
