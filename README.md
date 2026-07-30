@@ -5,7 +5,8 @@ A headless CMS + Digital Experience Platform, built incrementally to learn (and 
 ## Stack
 
 - **Backend:** .NET 8, Clean Architecture (Domain / Application / Infrastructure / Api), CQRS via MediatR
-- **Frontend:** Angular 20 (admin UI)
+- **Auth:** ASP.NET Core Identity + OpenIddict (OAuth2/OIDC authorization code + PKCE flow)
+- **Frontend:** Angular 20 (admin UI), angular-oauth2-oidc
 - **Data:** PostgreSQL, Redis
 - **Messaging:** Kafka (from Phase 3)
 - **AI:** Azure OpenAI + pgvector (from Phase 5)
@@ -42,7 +43,7 @@ Each phase is a working, demoable increment.
 
 - [x] **Phase 0 — Foundation.** Clean Architecture solution, Angular admin shell, Docker Compose, CI.
 - [x] **Phase 1 — Core CMS.** Content types/blocks/pages, draft→publish workflow with versioning, REST content delivery API.
-- [ ] **Phase 2 — Auth & Authorization.** OIDC login (Duende IdentityServer), access/refresh token rotation, RBAC → policy-based → multi-tenant claims authorization, MFA, audit logging.
+- [x] **Phase 2 — Auth & Authorization.** OIDC login via OpenIddict (authorization code + PKCE), access/refresh token rotation, RBAC → resource-based ownership policy, account lockout + rate limiting, audit log. (MFA and multi-tenant claims deferred — not needed yet with a single admin team.)
 - [ ] **Phase 3 — Event-driven backbone.** Kafka with transactional outbox; domain events drive cache invalidation, search re-indexing, audit trail.
 - [ ] **Phase 4 — DXP: personalization & experimentation.** Audience segmentation, targeting rules on content blocks, A/B testing, analytics dashboard.
 - [ ] **Phase 5 — AI-driven features.** AI content assistant in the editor, semantic search/recommendations via pgvector, AI auto-tagging on publish.
