@@ -20,5 +20,6 @@ public static class PageMappingExtensions
             page.Status.ToString(),
             page.LatestVersionNumber,
             page.OwnerId,
+            page.Tags,
             page.Versions.OrderByDescending(v => v.VersionNumber).Select(v => v.ToDto()).ToList());
 }

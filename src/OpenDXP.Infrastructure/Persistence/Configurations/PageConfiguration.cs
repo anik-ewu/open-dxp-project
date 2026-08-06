@@ -11,6 +11,9 @@ public class PageConfiguration : IEntityTypeConfiguration<Page>
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).ValueGeneratedNever();
         builder.Ignore(p => p.DomainEvents);
+        builder.Ignore(p => p.Tags);
+
+        builder.Property(p => p.TagsCsv).HasMaxLength(500);
 
         builder.Property(p => p.Slug)
             .IsRequired()

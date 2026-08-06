@@ -14,6 +14,7 @@ public record PageDetailDto(
     string Status,
     int LatestVersionNumber,
     Guid OwnerId,
+    IReadOnlyList<string> Tags,
     IReadOnlyList<PageVersionDto> Versions) : IOwnedResource;
 
 public record PublishedPageDto(Guid PageId, string Slug, string Title, string BlocksJson, int VersionNumber, DateTimeOffset PublishedAt);

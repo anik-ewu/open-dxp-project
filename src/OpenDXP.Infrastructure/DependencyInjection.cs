@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddHostedService<SearchReindexConsumer>();
         services.AddHostedService<AuditTrailConsumer>();
         services.AddHostedService<AnalyticsAggregatorConsumer>();
+        services.AddHostedService<AutoTaggingConsumer>();
 
         return services;
     }

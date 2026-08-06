@@ -16,8 +16,12 @@ public class Page : AggregateRoot
     public int LatestVersionNumber { get; private set; }
     public Guid? PublishedVersionId { get; private set; }
     public Guid OwnerId { get; private set; }
+    public string TagsCsv { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+
+    /// <summary>Set asynchronously by AutoTaggingConsumer after publish - not part of the draft/publish flow.</summary>
+    public IReadOnlyList<string> Tags => TagsCsv.Length == 0 ? [] : TagsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
     private readonly List<PageVersion> _versions = new();
     public IReadOnlyCollection<PageVersion> Versions => _versions.AsReadOnly();
@@ -78,4 +82,7 @@ public class Page : AggregateRoot
 
         return version;
     }
+
+    /// <summary>Doesn't touch UpdatedAt - tagging is metadata enrichment, not a content edit.</summary>
+    public void SetAutoTags(IEnumerable<string> tags) => TagsCsv = string.Join(',', tags);
 }
