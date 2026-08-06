@@ -41,4 +41,94 @@
       }
     </ul>
   }
+
+  @if (pageId) {
+    <section class="variants">
+      <h3>Personalization variants</h3>
+
+      @if (variantError) {
+        <p class="error">{{ variantError }}</p>
+      }
+
+      @if (variants.length === 0) {
+        <p>No variants yet — everyone sees the default content.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Segment</th>
+              <th>Traffic %</th>
+              <th>Priority</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (variant of variants; track variant.id) {
+              <tr>
+                <td>{{ variant.name }}</td>
+                <td>{{ variant.targetSegment ?? 'any' }}</td>
+                <td>{{ variant.trafficPercentage ?? '—' }}</td>
+                <td>{{ variant.priority }}</td>
+                <td><button type="button" (click)="deleteVariant(variant.id)">Delete</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <h4>New variant</h4>
+      <label>
+        Name
+        <input [(ngModel)]="newVariantName" name="newVariantName" placeholder="Mobile hero" />
+      </label>
+      <label>
+        Target segment (blank = untargeted / A-B test)
+        <input [(ngModel)]="newVariantSegment" name="newVariantSegment" placeholder="mobile" />
+      </label>
+      <label>
+        Traffic % (blank = always win when eligible)
+        <input [(ngModel)]="newVariantTrafficPercentage" name="newVariantTrafficPercentage" type="number" min="0" max="100" />
+      </label>
+      <label>
+        Priority (lower wins ties)
+        <input [(ngModel)]="newVariantPriority" name="newVariantPriority" type="number" />
+      </label>
+      <label>
+        Blocks (JSON)
+        <textarea [(ngModel)]="newVariantBlocksJson" name="newVariantBlocksJson" rows="6"></textarea>
+      </label>
+      <button type="button" (click)="createVariant()">Add variant</button>
+    </section>
+
+    <section class="analytics">
+      <h3>Analytics</h3>
+      <button type="button" (click)="loadAnalytics()">Refresh</button>
+
+      @if (analytics.length === 0) {
+        <p>No impressions recorded yet.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Variant</th>
+              <th>Impressions</th>
+              <th>Conversions</th>
+              <th>Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of analytics; track row.variantId) {
+              <tr>
+                <td>{{ row.variantLabel }}</td>
+                <td>{{ row.impressions }}</td>
+                <td>{{ row.conversions }}</td>
+                <td>{{ row.conversionRate }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
 </div>

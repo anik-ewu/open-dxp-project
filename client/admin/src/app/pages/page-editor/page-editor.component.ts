@@ -3,7 +3,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageDetail, PageVersion } from '../../core/models/page.model';
+import { PageVariant, VariantAnalytics } from '../../core/models/page-variant.model';
 import { PageService } from '../../core/services/page.service';
+import { PersonalizationService } from '../../core/services/personalization.service';
 
 @Component({
   selector: 'app-page-editor',
@@ -13,6 +15,7 @@ import { PageService } from '../../core/services/page.service';
 })
 export class PageEditorComponent implements OnInit {
   private readonly pageService = inject(PageService);
+  private readonly personalizationService = inject(PersonalizationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -25,10 +28,22 @@ export class PageEditorComponent implements OnInit {
   saving = false;
   error: string | null = null;
 
+  variants: PageVariant[] = [];
+  analytics: VariantAnalytics[] = [];
+  variantError: string | null = null;
+
+  newVariantName = '';
+  newVariantBlocksJson = '[]';
+  newVariantSegment = '';
+  newVariantTrafficPercentage: number | null = null;
+  newVariantPriority = 0;
+
   ngOnInit(): void {
     this.pageId = this.route.snapshot.paramMap.get('id');
     if (this.pageId) {
       this.pageService.getById(this.pageId).subscribe((page) => this.applyDetail(page));
+      this.loadVariants();
+      this.loadAnalytics();
     }
   }
 
@@ -70,6 +85,56 @@ export class PageEditorComponent implements OnInit {
         this.error = err.error?.detail ?? 'Failed to publish.';
       },
     });
+  }
+
+  loadVariants(): void {
+    if (!this.pageId) {
+      return;
+    }
+    this.personalizationService.getVariants(this.pageId).subscribe((variants) => (this.variants = variants));
+  }
+
+  loadAnalytics(): void {
+    if (!this.pageId) {
+      return;
+    }
+    this.personalizationService.getAnalytics(this.pageId).subscribe((analytics) => (this.analytics = analytics));
+  }
+
+  createVariant(): void {
+    if (!this.pageId) {
+      return;
+    }
+
+    this.variantError = null;
+    this.personalizationService
+      .createVariant(this.pageId, {
+        name: this.newVariantName,
+        blocksJson: this.newVariantBlocksJson,
+        targetSegment: this.newVariantSegment.trim() ? this.newVariantSegment.trim() : null,
+        trafficPercentage: this.newVariantTrafficPercentage,
+        priority: this.newVariantPriority,
+      })
+      .subscribe({
+        next: () => {
+          this.newVariantName = '';
+          this.newVariantBlocksJson = '[]';
+          this.newVariantSegment = '';
+          this.newVariantTrafficPercentage = null;
+          this.newVariantPriority = 0;
+          this.loadVariants();
+        },
+        error: (err) => {
+          this.variantError = err.error?.detail ?? 'Failed to create variant.';
+        },
+      });
+  }
+
+  deleteVariant(variantId: string): void {
+    if (!this.pageId) {
+      return;
+    }
+    this.personalizationService.deleteVariant(this.pageId, variantId).subscribe(() => this.loadVariants());
   }
 
   private applyDetail(page: PageDetail): void {
