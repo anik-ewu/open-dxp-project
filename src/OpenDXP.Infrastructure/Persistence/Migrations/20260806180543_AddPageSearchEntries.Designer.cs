@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OpenDXP.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using OpenDXP.Infrastructure.Persistence;
 namespace OpenDXP.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(OpenDxpDbContext))]
-    partial class OpenDxpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260806180543_AddPageSearchEntries")]
+    partial class AddPageSearchEntries
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

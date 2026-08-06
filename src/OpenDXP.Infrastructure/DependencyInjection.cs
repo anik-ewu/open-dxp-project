@@ -6,8 +6,10 @@ using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Application.Content;
 using OpenDXP.Infrastructure.Auditing;
 using OpenDXP.Infrastructure.Messaging;
+using OpenDXP.Infrastructure.Messaging.Consumers;
 using OpenDXP.Infrastructure.Outbox;
 using OpenDXP.Infrastructure.Persistence;
+using StackExchange.Redis;
 
 namespace OpenDXP.Infrastructure;
 
@@ -30,10 +32,16 @@ public static class DependencyInjection
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<OpenDxpDbContext>());
 
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis") ?? "localhost:6379"));
+
         var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:19092";
         services.AddSingleton<IProducer<string, string>>(_ =>
             new ProducerBuilder<string, string>(new ProducerConfig { BootstrapServers = bootstrapServers }).Build());
         services.AddHostedService<OutboxPublisherService>();
+        services.AddHostedService<CacheInvalidationConsumer>();
+        services.AddHostedService<SearchReindexConsumer>();
+        services.AddHostedService<AuditTrailConsumer>();
 
         return services;
     }

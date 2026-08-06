@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Application.Common.Security;
 using OpenDXP.Application.Content.Commands;
 using OpenDXP.Application.Content.Dtos;
@@ -13,8 +12,7 @@ namespace OpenDXP.Api.Controllers;
 [ApiController]
 [Route("api/pages")]
 [Authorize]
-public class PagesController(ISender mediator, IAuthorizationService authorizationService, IAuditLogService auditLog)
-    : ControllerBase
+public class PagesController(ISender mediator, IAuthorizationService authorizationService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<PageSummaryDto>>> GetAll(CancellationToken cancellationToken)
@@ -68,13 +66,9 @@ public class PagesController(ISender mediator, IAuthorizationService authorizati
             return Forbid();
         }
 
+        // Audit trail entry is written by AuditTrailConsumer, reacting to the PagePublishedEvent
+        // that flowed through the outbox - not logged inline here anymore.
         var version = await mediator.Send(new PublishPageCommand(id), cancellationToken);
-
-        var subject = User.FindFirst(Claims.Subject)?.Value;
-        await auditLog.LogAsync(
-            "PagePublished", subject, $"Page '{existing.Slug}' published as version {version.VersionNumber}.",
-            HttpContext.Connection.RemoteIpAddress?.ToString(), cancellationToken);
-
         return Ok(version);
     }
 
