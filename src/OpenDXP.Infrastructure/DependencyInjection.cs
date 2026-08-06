@@ -1,9 +1,11 @@
+using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Application.Content;
 using OpenDXP.Infrastructure.Auditing;
+using OpenDXP.Infrastructure.Messaging;
 using OpenDXP.Infrastructure.Outbox;
 using OpenDXP.Infrastructure.Persistence;
 
@@ -27,6 +29,11 @@ public static class DependencyInjection
 
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<OpenDxpDbContext>());
+
+        var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:19092";
+        services.AddSingleton<IProducer<string, string>>(_ =>
+            new ProducerBuilder<string, string>(new ProducerConfig { BootstrapServers = bootstrapServers }).Build());
+        services.AddHostedService<OutboxPublisherService>();
 
         return services;
     }
