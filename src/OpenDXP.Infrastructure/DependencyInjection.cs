@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddHostedService<CacheInvalidationConsumer>();
         services.AddHostedService<SearchReindexConsumer>();
         services.AddHostedService<AuditTrailConsumer>();
+        services.AddHostedService<AnalyticsAggregatorConsumer>();
 
         return services;
     }
