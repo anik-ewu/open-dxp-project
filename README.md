@@ -8,7 +8,7 @@ A headless CMS + Digital Experience Platform, built incrementally to learn (and 
 - **Auth:** ASP.NET Core Identity + OpenIddict (OAuth2/OIDC authorization code + PKCE flow)
 - **Frontend:** Angular 20 (admin UI), angular-oauth2-oidc
 - **Data:** PostgreSQL, Redis
-- **Messaging:** Kafka (from Phase 3)
+- **Messaging:** Kafka via Redpanda (transactional outbox + fan-out consumers)
 - **AI:** Azure OpenAI + pgvector (from Phase 5)
 - **Infra:** Docker Compose (local), Kubernetes/AKS (from Phase 7)
 
@@ -36,6 +36,8 @@ docker compose up
 - Admin UI: http://localhost:4200
 - Postgres: localhost:5432
 - Redis: localhost:6379
+- Kafka (Redpanda): localhost:19092
+- Redpanda Console (topic/message browser): http://localhost:8090
 
 ## Build roadmap
 
@@ -44,7 +46,7 @@ Each phase is a working, demoable increment.
 - [x] **Phase 0 — Foundation.** Clean Architecture solution, Angular admin shell, Docker Compose, CI.
 - [x] **Phase 1 — Core CMS.** Content types/blocks/pages, draft→publish workflow with versioning, REST content delivery API.
 - [x] **Phase 2 — Auth & Authorization.** OIDC login via OpenIddict (authorization code + PKCE), access/refresh token rotation, RBAC → resource-based ownership policy, account lockout + rate limiting, audit log. (MFA and multi-tenant claims deferred — not needed yet with a single admin team.)
-- [ ] **Phase 3 — Event-driven backbone.** Kafka with transactional outbox; domain events drive cache invalidation, search re-indexing, audit trail.
+- [x] **Phase 3 — Event-driven backbone.** Kafka (Redpanda) with transactional outbox; PagePublished domain event drives three independent consumers - Redis cache invalidation, search re-indexing, and audit trail - decoupled from the write path entirely.
 - [ ] **Phase 4 — DXP: personalization & experimentation.** Audience segmentation, targeting rules on content blocks, A/B testing, analytics dashboard.
 - [ ] **Phase 5 — AI-driven features.** AI content assistant in the editor, semantic search/recommendations via pgvector, AI auto-tagging on publish.
 - [ ] **Phase 6 — Polish.** OpenTelemetry observability, architecture docs, live Azure deployment.
