@@ -60,6 +60,31 @@ public class PageTests
     }
 
     [Fact]
+    public void Publish_RaisesAPagePublishedDomainEvent()
+    {
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
+
+        var version = page.Publish();
+
+        var domainEvent = Assert.Single(page.DomainEvents);
+        var pagePublished = Assert.IsType<PagePublishedEvent>(domainEvent);
+        Assert.Equal(page.Id, pagePublished.PageId);
+        Assert.Equal("about-us", pagePublished.Slug);
+        Assert.Equal(version.VersionNumber, pagePublished.VersionNumber);
+    }
+
+    [Fact]
+    public void ClearDomainEvents_RemovesRaisedEvents()
+    {
+        var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);
+        page.Publish();
+
+        page.ClearDomainEvents();
+
+        Assert.Empty(page.DomainEvents);
+    }
+
+    [Fact]
     public void Publish_TwiceAppendsANewVersionInsteadOfOverwritingHistory()
     {
         var page = Page.CreateDraft("about-us", "About Us", "[]", OwnerId);

@@ -1,10 +1,12 @@
+using OpenDXP.Domain.Common;
+
 namespace OpenDXP.Domain.Content;
 
 /// <summary>
 /// Aggregate root. Title/BlocksJson hold the current draft; publishing snapshots them into
 /// an append-only PageVersion rather than overwriting history.
 /// </summary>
-public class Page
+public class Page : AggregateRoot
 {
     public Guid Id { get; private set; }
     public string Slug { get; private set; } = string.Empty;
@@ -71,6 +73,9 @@ public class Page
         PublishedVersionId = version.Id;
         Status = PageStatus.Published;
         UpdatedAt = DateTimeOffset.UtcNow;
+
+        RaiseDomainEvent(new PagePublishedEvent(Id, Slug, Title, BlocksJson, version.VersionNumber, UpdatedAt));
+
         return version;
     }
 }
