@@ -47,7 +47,7 @@ Each phase is a working, demoable increment.
 - [x] **Phase 1 — Core CMS.** Content types/blocks/pages, draft→publish workflow with versioning, REST content delivery API.
 - [x] **Phase 2 — Auth & Authorization.** OIDC login via OpenIddict (authorization code + PKCE), access/refresh token rotation, RBAC → resource-based ownership policy, account lockout + rate limiting, audit log. (MFA and multi-tenant claims deferred — not needed yet with a single admin team.)
 - [x] **Phase 3 — Event-driven backbone.** Kafka (Redpanda) with transactional outbox; PagePublished domain event drives three independent consumers - Redis cache invalidation, search re-indexing, and audit trail - decoupled from the write path entirely.
-- [ ] **Phase 4 — DXP: personalization & experimentation.** Audience segmentation, targeting rules on content blocks, A/B testing, analytics dashboard.
+- [x] **Phase 4 — DXP: personalization & experimentation.** PageVariant targeting by audience segment with priority ordering, stable per-visitor A/B traffic splitting (SHA256 bucketing), delivery-time selection via PersonalizationEngine, and an analytics dashboard (impressions/conversions/rate) fed by a fourth Kafka consumer aggregating VariantServed/ConversionRecorded events.
 - [ ] **Phase 5 — AI-driven features.** AI content assistant in the editor, semantic search/recommendations via pgvector, AI auto-tagging on publish.
 - [ ] **Phase 6 — Polish.** OpenTelemetry observability, architecture docs, live Azure deployment.
 - [ ] **Phase 7 — Kubernetes.** Helm chart / manifests, ConfigMaps/Secrets, HPA on the API, deployed to AKS.
