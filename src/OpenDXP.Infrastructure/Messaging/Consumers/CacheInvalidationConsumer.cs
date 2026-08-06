@@ -26,7 +26,7 @@ public class CacheInvalidationConsumer(
         var evt = JsonSerializer.Deserialize<PagePublishedEvent>(payloadJson)
                   ?? throw new InvalidOperationException("Could not deserialize PagePublishedEvent.");
 
-        var dto = new PublishedPageDto(evt.Slug, evt.Title, evt.BlocksJson, evt.VersionNumber, evt.OccurredAt);
+        var dto = new PublishedPageDto(evt.PageId, evt.Slug, evt.Title, evt.BlocksJson, evt.VersionNumber, evt.OccurredAt);
 
         var redis = scopedProvider.GetRequiredService<IConnectionMultiplexer>();
         var db = redis.GetDatabase();

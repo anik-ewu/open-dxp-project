@@ -21,6 +21,6 @@ public class GetPublishedPageBySlugQueryHandler(IPageRepository repository)
 
         var version = page.Versions.Single(v => v.Id == page.PublishedVersionId);
 
-        return new PublishedPageDto(page.Slug, version.Title, version.BlocksJson, version.VersionNumber, version.PublishedAt);
+        return new PublishedPageDto(page.Id, page.Slug, version.Title, version.BlocksJson, version.VersionNumber, version.PublishedAt);
     }
 }
