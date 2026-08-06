@@ -9,7 +9,9 @@ using OpenDXP.Infrastructure.Messaging;
 using OpenDXP.Infrastructure.Messaging.Consumers;
 using OpenDXP.Infrastructure.Outbox;
 using OpenDXP.Infrastructure.Persistence;
+using OpenDXP.Infrastructure.Personalization;
 using OpenDXP.Infrastructure.Search;
+using OpenDXP.Application.Personalization;
 using OpenDXP.Application.Search;
 using StackExchange.Redis;
 
@@ -31,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<IPageRepository, PageRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ISearchRepository, SearchRepository>();
+        services.AddScoped<IPageVariantRepository, PageVariantRepository>();
+        services.AddScoped<IVariantAnalyticsRepository, VariantAnalyticsRepository>();
 
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<OpenDxpDbContext>());
