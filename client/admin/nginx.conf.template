@@ -1,0 +1,29 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Resolve the upstream at request time, not at config load. A static proxy_pass hostname
+    # makes nginx refuse to start at all if that host isn't resolvable yet (confirmed locally -
+    # it crash-loops), which is a real risk if this container starts before the API's DNS entry
+    # is ready. ${DNS_RESOLVER} is Docker's embedded DNS (127.0.0.11) for local testing; Azure
+    # Container Apps needs its own resolver address here - unverified, since this hasn't been
+    # deployed yet (see infra/README.md).
+    resolver ${DNS_RESOLVER} valid=10s;
+
+    # Angular's environment.ts (production) uses relative API URLs (apiBaseUrl: '') on purpose -
+    # this reverse-proxies them to wherever the API actually lives, so the built JS bundle never
+    # needs to bake in an environment-specific hostname.
+    location ~ ^/(api|connect|account)/ {
+        set $upstream ${API_UPSTREAM};
+        proxy_pass $upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
