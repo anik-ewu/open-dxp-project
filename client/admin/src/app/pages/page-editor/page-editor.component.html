@@ -1,159 +1,195 @@
-<div class="page-editor">
-  <a routerLink="/">&larr; Back to pages</a>
+<div class="space-y-8">
+  <div>
+    <a routerLink="/" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">&larr; Back to pages</a>
+  </div>
 
-  <h2>{{ pageId ? 'Edit page' : 'New page' }}</h2>
-
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
-
-  <label>
-    Slug
-    <input [(ngModel)]="slug" name="slug" placeholder="about-us" [disabled]="!!pageId" />
-  </label>
-
-  <label>
-    Title
-    <input [(ngModel)]="title" name="title" />
-  </label>
-
-  <label>
-    Blocks (JSON)
-    <textarea [(ngModel)]="blocksJson" name="blocksJson" rows="10"></textarea>
-  </label>
-
-  <div class="actions">
-    <button type="button" (click)="save()" [disabled]="saving">Save draft</button>
-    @if (pageId) {
-      <button type="button" (click)="publish()">Publish</button>
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-semibold text-slate-900">{{ pageId ? 'Edit page' : 'New page' }}</h2>
+    @if (status) {
+      <span [class]="status === 'Published' ? 'badge-published' : 'badge-draft'">{{ status }}</span>
     }
   </div>
 
-  @if (status) {
-    <p>Status: {{ status }}</p>
+  @if (error) {
+    <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
   }
+
+  <div class="card space-y-4">
+    <div>
+      <label for="slug" class="field-label">Slug</label>
+      <input id="slug" class="field-input" [(ngModel)]="slug" name="slug" placeholder="about-us" [disabled]="!!pageId" />
+    </div>
+
+    <div>
+      <label for="title" class="field-label">Title</label>
+      <input id="title" class="field-input" [(ngModel)]="title" name="title" />
+    </div>
+
+    <div>
+      <label for="blocksJson" class="field-label">Blocks (JSON)</label>
+      <textarea id="blocksJson" class="field-input font-mono text-xs" [(ngModel)]="blocksJson" name="blocksJson" rows="10"></textarea>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <button type="button" (click)="save()" [disabled]="saving" class="btn-primary">Save draft</button>
+      @if (pageId) {
+        <button type="button" (click)="publish()" class="btn-secondary">Publish</button>
+      }
+    </div>
+  </div>
 
   @if (versions.length > 0) {
-    <h3>Version history</h3>
-    <ul>
-      @for (version of versions; track version.id) {
-        <li>v{{ version.versionNumber }} — {{ version.title }} — {{ version.publishedAt | date: 'short' }}</li>
-      }
-    </ul>
+    <div class="card">
+      <h3 class="mb-3 text-lg font-semibold text-slate-900">Version history</h3>
+      <ul class="divide-y divide-slate-100 text-sm text-slate-600">
+        @for (version of versions; track version.id) {
+          <li class="py-2">
+            <span class="font-medium text-slate-900">v{{ version.versionNumber }}</span>
+            — {{ version.title }} — {{ version.publishedAt | date: 'short' }}
+          </li>
+        }
+      </ul>
+    </div>
   }
 
   @if (pageId) {
-    <section class="enrichment">
-      <h3>Auto-tags &amp; related pages</h3>
-      <button type="button" (click)="refreshEnrichment()">Refresh</button>
-      <p><em>Computed a few seconds after publish by Kafka consumers - rule-based tagging, pgvector similarity for related pages.</em></p>
+    <div class="card">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900">Auto-tags &amp; related pages</h3>
+        <button type="button" (click)="refreshEnrichment()" class="btn-secondary">Refresh</button>
+      </div>
+      <p class="mb-4 text-xs italic text-slate-500">
+        Computed a few seconds after publish by Kafka consumers - rule-based tagging, pgvector similarity for related pages.
+      </p>
 
-      @if (tags.length > 0) {
-        <p>Tags: {{ tags.join(', ') }}</p>
-      } @else {
-        <p>No tags yet.</p>
-      }
+      <div class="mb-4">
+        <h4 class="mb-2 text-sm font-semibold text-slate-700">Tags</h4>
+        @if (tags.length > 0) {
+          <div class="flex flex-wrap gap-2">
+            @for (tag of tags; track tag) {
+              <span class="badge-draft">{{ tag }}</span>
+            }
+          </div>
+        } @else {
+          <p class="text-sm text-slate-500">No tags yet.</p>
+        }
+      </div>
 
-      @if (relatedPages.length > 0) {
-        <h4>Related pages</h4>
-        <ul>
-          @for (related of relatedPages; track related.pageId) {
-            <li><a [routerLink]="['/pages', related.pageId]">{{ related.title }}</a> — {{ related.snippet }}</li>
-          }
-        </ul>
-      } @else {
-        <p>No related pages found yet.</p>
-      }
-    </section>
-  }
+      <div>
+        <h4 class="mb-2 text-sm font-semibold text-slate-700">Related pages</h4>
+        @if (relatedPages.length > 0) {
+          <ul class="divide-y divide-slate-100 text-sm">
+            @for (related of relatedPages; track related.pageId) {
+              <li class="py-2">
+                <a [routerLink]="['/pages', related.pageId]" class="font-medium text-indigo-600 hover:text-indigo-500">{{ related.title }}</a>
+                <span class="text-slate-500"> — {{ related.snippet }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-sm text-slate-500">No related pages found yet.</p>
+        }
+      </div>
+    </div>
 
-  @if (pageId) {
-    <section class="variants">
-      <h3>Personalization variants</h3>
+    <div class="card">
+      <h3 class="mb-3 text-lg font-semibold text-slate-900">Personalization variants</h3>
 
       @if (variantError) {
-        <p class="error">{{ variantError }}</p>
+        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ variantError }}</div>
       }
 
       @if (variants.length === 0) {
-        <p>No variants yet — everyone sees the default content.</p>
+        <p class="mb-4 text-sm text-slate-500">No variants yet — everyone sees the default content.</p>
       } @else {
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Segment</th>
-              <th>Traffic %</th>
-              <th>Priority</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (variant of variants; track variant.id) {
+        <div class="mb-6 overflow-hidden rounded-lg border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
               <tr>
-                <td>{{ variant.name }}</td>
-                <td>{{ variant.targetSegment ?? 'any' }}</td>
-                <td>{{ variant.trafficPercentage ?? '—' }}</td>
-                <td>{{ variant.priority }}</td>
-                <td><button type="button" (click)="deleteVariant(variant.id)">Delete</button></td>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Segment</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Traffic %</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</th>
+                <th class="px-4 py-2"></th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              @for (variant of variants; track variant.id) {
+                <tr>
+                  <td class="px-4 py-2 text-sm font-medium text-slate-900">{{ variant.name }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ variant.targetSegment ?? 'any' }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ variant.trafficPercentage ?? '—' }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ variant.priority }}</td>
+                  <td class="px-4 py-2 text-right">
+                    <button type="button" (click)="deleteVariant(variant.id)" class="btn-danger">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
 
-      <h4>New variant</h4>
-      <label>
-        Name
-        <input [(ngModel)]="newVariantName" name="newVariantName" placeholder="Mobile hero" />
-      </label>
-      <label>
-        Target segment (blank = untargeted / A-B test)
-        <input [(ngModel)]="newVariantSegment" name="newVariantSegment" placeholder="mobile" />
-      </label>
-      <label>
-        Traffic % (blank = always win when eligible)
-        <input [(ngModel)]="newVariantTrafficPercentage" name="newVariantTrafficPercentage" type="number" min="0" max="100" />
-      </label>
-      <label>
-        Priority (lower wins ties)
-        <input [(ngModel)]="newVariantPriority" name="newVariantPriority" type="number" />
-      </label>
-      <label>
-        Blocks (JSON)
-        <textarea [(ngModel)]="newVariantBlocksJson" name="newVariantBlocksJson" rows="6"></textarea>
-      </label>
-      <button type="button" (click)="createVariant()">Add variant</button>
-    </section>
+      <div class="border-t border-slate-100 pt-4">
+        <h4 class="mb-3 text-sm font-semibold text-slate-700">New variant</h4>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="newVariantName" class="field-label">Name</label>
+            <input id="newVariantName" class="field-input" [(ngModel)]="newVariantName" name="newVariantName" placeholder="Mobile hero" />
+          </div>
+          <div>
+            <label for="newVariantSegment" class="field-label">Target segment (blank = untargeted / A-B test)</label>
+            <input id="newVariantSegment" class="field-input" [(ngModel)]="newVariantSegment" name="newVariantSegment" placeholder="mobile" />
+          </div>
+          <div>
+            <label for="newVariantTrafficPercentage" class="field-label">Traffic % (blank = always win when eligible)</label>
+            <input id="newVariantTrafficPercentage" class="field-input" [(ngModel)]="newVariantTrafficPercentage" name="newVariantTrafficPercentage" type="number" min="0" max="100" />
+          </div>
+          <div>
+            <label for="newVariantPriority" class="field-label">Priority (lower wins ties)</label>
+            <input id="newVariantPriority" class="field-input" [(ngModel)]="newVariantPriority" name="newVariantPriority" type="number" />
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="newVariantBlocksJson" class="field-label">Blocks (JSON)</label>
+          <textarea id="newVariantBlocksJson" class="field-input font-mono text-xs" [(ngModel)]="newVariantBlocksJson" name="newVariantBlocksJson" rows="6"></textarea>
+        </div>
+        <button type="button" (click)="createVariant()" class="btn-primary mt-4">Add variant</button>
+      </div>
+    </div>
 
-    <section class="analytics">
-      <h3>Analytics</h3>
-      <button type="button" (click)="loadAnalytics()">Refresh</button>
+    <div class="card">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900">Analytics</h3>
+        <button type="button" (click)="loadAnalytics()" class="btn-secondary">Refresh</button>
+      </div>
 
       @if (analytics.length === 0) {
-        <p>No impressions recorded yet.</p>
+        <p class="text-sm text-slate-500">No impressions recorded yet.</p>
       } @else {
-        <table>
-          <thead>
-            <tr>
-              <th>Variant</th>
-              <th>Impressions</th>
-              <th>Conversions</th>
-              <th>Rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of analytics; track row.variantId) {
+        <div class="overflow-hidden rounded-lg border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
               <tr>
-                <td>{{ row.variantLabel }}</td>
-                <td>{{ row.impressions }}</td>
-                <td>{{ row.conversions }}</td>
-                <td>{{ row.conversionRate }}%</td>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Variant</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Impressions</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Conversions</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Rate</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+              @for (row of analytics; track row.variantId) {
+                <tr>
+                  <td class="px-4 py-2 text-sm font-medium text-slate-900">{{ row.variantLabel }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ row.impressions }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ row.conversions }}</td>
+                  <td class="px-4 py-2 text-sm text-slate-500">{{ row.conversionRate }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-    </section>
+    </div>
   }
 </div>
