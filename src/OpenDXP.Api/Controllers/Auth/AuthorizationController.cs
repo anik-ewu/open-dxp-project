@@ -57,6 +57,21 @@ public class AuthorizationController(UserManager<ApplicationUser> userManager) :
         return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
+    [HttpGet("~/connect/logout")]
+    [HttpPost("~/connect/logout")]
+    public async Task<IActionResult> Logout()
+    {
+        // Ends the browser's Identity session (the auth cookie set at /account/login) so a
+        // subsequent /connect/authorize can't silently re-issue a code without a fresh login.
+        await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+        // OpenIddict validates post_logout_redirect_uri against the client's registered
+        // PostLogoutRedirectUris and performs the redirect; "/" is only the fallback.
+        return SignOut(
+            authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+            properties: new AuthenticationProperties { RedirectUri = "/" });
+    }
+
     [HttpPost("~/connect/token")]
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> Exchange()

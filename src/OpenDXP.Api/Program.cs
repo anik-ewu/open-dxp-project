@@ -62,7 +62,8 @@ builder.Services.AddOpenIddict()
     {
         options.SetAuthorizationEndpointUris("connect/authorize")
                .SetTokenEndpointUris("connect/token")
-               .SetUserInfoEndpointUris("connect/userinfo");
+               .SetUserInfoEndpointUris("connect/userinfo")
+               .SetEndSessionEndpointUris("connect/logout");
 
         options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
         options.AllowRefreshTokenFlow();
@@ -81,6 +82,7 @@ builder.Services.AddOpenIddict()
         var aspNetCoreServerBuilder = options.UseAspNetCore()
                .EnableAuthorizationEndpointPassthrough()
                .EnableTokenEndpointPassthrough()
+               .EnableEndSessionEndpointPassthrough()
                .EnableStatusCodePagesIntegration();
 
         // Local HTTP-only dev containers have no TLS in front of them; never disable this in production.
@@ -220,6 +222,7 @@ using (var scope = app.Services.CreateScope())
         {
             Permissions.Endpoints.Authorization,
             Permissions.Endpoints.Token,
+            Permissions.Endpoints.EndSession,
             Permissions.GrantTypes.AuthorizationCode,
             Permissions.GrantTypes.RefreshToken,
             Permissions.ResponseTypes.Code,
