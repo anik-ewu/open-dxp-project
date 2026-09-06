@@ -1,0 +1,59 @@
+# Defaults are tuned for a local cluster (minikube/kind), where this chart has actually been
+# deployed and tested - see infra/README.md for what's still unverified for a real cloud cluster
+# (AKS specifically needs its own pass: ingress class, storage class, and real secrets via a
+# proper secret store rather than values.yaml).
+
+# "Production" enforces HTTPS-only on every OpenIddict endpoint - correct, but only works with a
+# real TLS-terminating ingress in front (the API trusts X-Forwarded-Proto from any proxy, see
+# Program.cs's ForwardedHeadersOptions). Set to "Development" for local clusters without one
+# (minikube's default ingress-nginx here has no cert configured) - confirmed by testing: the same
+# request that gets a clean 302-to-login with X-Forwarded-Proto: https set gets a hard 400
+# ("This server only accepts HTTPS requests") without it.
+aspnetEnvironment: "Production"
+
+api:
+  image:
+    repository: opendxp-api
+    tag: local
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+admin:
+  image:
+    repository: opendxp-admin
+    tag: local
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+postgres:
+  image: pgvector/pgvector:pg16
+  storageSize: 1Gi
+  database: opendxp
+  username: opendxp
+
+redis:
+  image: redis:7-alpine
+
+redpanda:
+  image: docker.redpanda.com/redpandadata/redpanda:v24.2.18
+
+ingress:
+  enabled: true
+  host: opendxp.local
+  className: nginx
+
+# Overridden at install time (--set secrets.postgresPassword=... or a separate, uncommitted
+# values file) - the default here exists only so the chart installs cleanly for local testing.
+secrets:
+  postgresPassword: "changeme-local-dev-only"

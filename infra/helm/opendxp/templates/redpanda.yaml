@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-redpanda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-redpanda
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-redpanda
+    spec:
+      containers:
+        - name: redpanda
+          image: {{ .Values.redpanda.image }}
+          args:
+            - redpanda
+            - start
+            # Bind addresses must be local (0.0.0.0) - a Service ClusterIP isn't a real interface
+            # on the pod's network namespace, so binding to it fails at startup (confirmed: this
+            # crashed with "Cannot assign requested address" when --rpc-addr used the Service DNS
+            # name). The Service name belongs only on the advertise-* addresses, which is what
+            # other clients resolve to reach this pod - a separate concern from what this process
+            # binds locally.
+            - --kafka-addr=internal://0.0.0.0:9092
+            - --advertise-kafka-addr=internal://{{ .Release.Name }}-redpanda:9092
+            - --rpc-addr=0.0.0.0:33145
+            - --advertise-rpc-addr={{ .Release.Name }}-redpanda:33145
+            - --mode=dev-container
+            - --smp=1
+          ports:
+            - containerPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-redpanda
+spec:
+  selector:
+    app: {{ .Release.Name }}-redpanda
+  ports:
+    - port: 9092
+      targetPort: 9092

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  ConnectionStrings__Redis: "{{ .Release.Name }}-redis:6379"
+  Kafka__BootstrapServers: "{{ .Release.Name }}-redpanda:9092"
+  ASPNETCORE_ENVIRONMENT: {{ .Values.aspnetEnvironment | quote }}

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-admin
+spec:
+  replicas: {{ .Values.admin.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-admin
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-admin
+    spec:
+      containers:
+        - name: admin
+          image: "{{ .Values.admin.image.repository }}:{{ .Values.admin.image.tag }}"
+          imagePullPolicy: {{ .Values.admin.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_UPSTREAM
+              value: "http://{{ .Release.Name }}-api:8080"
+            # 10.96.0.10 is the conventional kube-dns/CoreDNS ClusterIP on kubeadm-based clusters
+            # (confirmed on this minikube cluster via `kubectl get svc -n kube-system kube-dns`) -
+            # verify per-cluster, since it's a convention, not a guarantee (AKS/EKS/GKE may differ).
+            - name: DNS_RESOLVER
+              value: "10.96.0.10"
+          resources:
+            {{- toYaml .Values.admin.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-admin
+spec:
+  selector:
+    app: {{ .Release.Name }}-admin
+  ports:
+    - port: 80
+      targetPort: 80
