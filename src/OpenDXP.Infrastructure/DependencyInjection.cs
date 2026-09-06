@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using OpenDXP.Application.Common.Auditing;
 using OpenDXP.Application.Content;
 using OpenDXP.Infrastructure.Auditing;
@@ -13,6 +14,7 @@ using OpenDXP.Infrastructure.Personalization;
 using OpenDXP.Infrastructure.Search;
 using OpenDXP.Application.Personalization;
 using OpenDXP.Application.Search;
+using Pgvector.Npgsql;
 using StackExchange.Redis;
 
 namespace OpenDXP.Infrastructure;
@@ -23,9 +25,13 @@ public static class DependencyInjection
     {
         services.AddSingleton<DomainEventsToOutboxInterceptor>();
 
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(configuration.GetConnectionString("Postgres"));
+        dataSourceBuilder.UseVector();
+        services.AddSingleton(dataSourceBuilder.Build());
+
         services.AddDbContext<OpenDxpDbContext>((sp, options) =>
         {
-            options.UseNpgsql(configuration.GetConnectionString("Postgres"));
+            options.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>());
             options.UseOpenIddict();
             options.AddInterceptors(sp.GetRequiredService<DomainEventsToOutboxInterceptor>());
         });
@@ -35,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchRepository, SearchRepository>();
         services.AddScoped<IPageVariantRepository, PageVariantRepository>();
         services.AddScoped<IVariantAnalyticsRepository, VariantAnalyticsRepository>();
+        services.AddSingleton<IEmbeddingService, HashingEmbeddingService>();
 
         services.AddOpenIddict()
             .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<OpenDxpDbContext>());

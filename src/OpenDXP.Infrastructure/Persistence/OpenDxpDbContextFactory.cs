@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Npgsql;
+using Pgvector.Npgsql;
 
 namespace OpenDXP.Infrastructure.Persistence;
 
@@ -11,8 +13,12 @@ public class OpenDxpDbContextFactory : IDesignTimeDbContextFactory<OpenDxpDbCont
 {
     public OpenDxpDbContext CreateDbContext(string[] args)
     {
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(
+            "Host=localhost;Database=opendxp;Username=opendxp;Password=opendxp");
+        dataSourceBuilder.UseVector();
+
         var optionsBuilder = new DbContextOptionsBuilder<OpenDxpDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Database=opendxp;Username=opendxp;Password=opendxp");
+        optionsBuilder.UseNpgsql(dataSourceBuilder.Build());
         return new OpenDxpDbContext(optionsBuilder.Options);
     }
 }
