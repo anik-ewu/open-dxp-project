@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenDXP.Application.Common.Messaging;
+using OpenDXP.Application.Common.Telemetry;
 
 namespace OpenDXP.Infrastructure.Messaging;
 
@@ -54,11 +55,19 @@ public abstract class KafkaConsumerBackgroundService(
                         ? Encoding.UTF8.GetString(bytes)
                         : string.Empty;
 
+                    using var activity = OpenDxpTelemetry.ActivitySource.StartActivity($"Consume {eventType}");
+                    activity?.SetTag("messaging.system", "kafka");
+                    activity?.SetTag("messaging.destination", topic);
+                    activity?.SetTag("messaging.consumer_group", groupId);
+
+                    var groupTag = new KeyValuePair<string, object?>("consumer_group", groupId);
+
                     using var scope = scopeFactory.CreateScope();
                     HandleAsync(eventType, result.Message.Value, scope.ServiceProvider, stoppingToken)
                         .GetAwaiter().GetResult();
 
                     consumer.Commit(result);
+                    OpenDxpTelemetry.KafkaMessagesProcessed.Add(1, groupTag);
                 }
                 catch (ConsumeException ex)
                 {
@@ -67,6 +76,7 @@ public abstract class KafkaConsumerBackgroundService(
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     logger.LogError(ex, "Error handling message in consumer group {GroupId}.", groupId);
+                    OpenDxpTelemetry.KafkaMessagesFailed.Add(1, new KeyValuePair<string, object?>("consumer_group", groupId));
                 }
             }
         }

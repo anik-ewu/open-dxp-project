@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using OpenDXP.Api.Authorization;
 using OpenDXP.Api.Middleware;
 using OpenDXP.Application.Common.Security;
+using OpenDXP.Application.Common.Telemetry;
 using OpenDXP.Application.Content.Commands;
 using OpenDXP.Infrastructure;
 using OpenDXP.Infrastructure.Identity;
@@ -13,6 +14,9 @@ using OpenDXP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 const string AuthRateLimiterPolicy = "auth";
@@ -116,6 +120,29 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
                       ?? ["http://localhost:4200"];
 builder.Services.AddCors(options =>
     options.AddPolicy(AdminUiCorsPolicy, policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+
+var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"];
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("OpenDXP.Api"))
+    .WithTracing(tracing =>
+    {
+        tracing.AddSource(OpenDxpTelemetry.SourceName)
+               .AddSource("Npgsql")
+               .AddAspNetCoreInstrumentation(o => o.Filter = ctx => ctx.Request.Path != "/metrics")
+               .AddHttpClientInstrumentation();
+
+        if (otlpEndpoint is not null)
+        {
+            tracing.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
+        }
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics.AddMeter(OpenDxpTelemetry.SourceName)
+               .AddAspNetCoreInstrumentation()
+               .AddRuntimeInstrumentation()
+               .AddPrometheusExporter();
+    });
 
 var app = builder.Build();
 
@@ -221,5 +248,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();

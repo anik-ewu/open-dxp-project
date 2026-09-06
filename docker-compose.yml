@@ -45,6 +45,15 @@ services:
     depends_on:
       - redpanda
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
   api:
     build:
       context: .
@@ -57,12 +66,14 @@ services:
       ConnectionStrings__Postgres: "Host=postgres;Database=opendxp;Username=opendxp;Password=opendxp"
       ConnectionStrings__Redis: "redis:6379"
       Kafka__BootstrapServers: "redpanda:9092"
+      OpenTelemetry__OtlpEndpoint: "http://jaeger:4317"
     volumes:
       - .:/src
     depends_on:
       - postgres
       - redis
       - redpanda
+      - jaeger
 
   admin:
     build:
