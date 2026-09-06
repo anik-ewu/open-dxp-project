@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using OpenDXP.Api.Authorization;
@@ -121,6 +122,19 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
 builder.Services.AddCors(options =>
     options.AddPolicy(AdminUiCorsPolicy, policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 
+// Needed behind any reverse proxy that terminates TLS (Kubernetes Ingress, Azure Container Apps'
+// own ingress) - without this, the app sees every request as plain HTTP even when the real client
+// connection was HTTPS, which fails OpenIddict's transport security check in Production.
+// KnownNetworks/KnownProxies are cleared because the proxy's pod IP isn't fixed in a cluster;
+// this only matters if the API is reachable directly, bypassing the proxy, which it isn't here
+// (ClusterIP only, no NodePort).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"];
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService("OpenDXP.Api"))
@@ -230,6 +244,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -249,5 +265,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapPrometheusScrapingEndpoint();
+app.MapGet("/health", () => Results.Ok()).AllowAnonymous();
 
 app.Run();
