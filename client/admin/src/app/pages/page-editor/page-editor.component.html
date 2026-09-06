@@ -43,6 +43,31 @@
   }
 
   @if (pageId) {
+    <section class="enrichment">
+      <h3>Auto-tags &amp; related pages</h3>
+      <button type="button" (click)="refreshEnrichment()">Refresh</button>
+      <p><em>Computed a few seconds after publish by Kafka consumers - rule-based tagging, pgvector similarity for related pages.</em></p>
+
+      @if (tags.length > 0) {
+        <p>Tags: {{ tags.join(', ') }}</p>
+      } @else {
+        <p>No tags yet.</p>
+      }
+
+      @if (relatedPages.length > 0) {
+        <h4>Related pages</h4>
+        <ul>
+          @for (related of relatedPages; track related.pageId) {
+            <li><a [routerLink]="['/pages', related.pageId]">{{ related.title }}</a> — {{ related.snippet }}</li>
+          }
+        </ul>
+      } @else {
+        <p>No related pages found yet.</p>
+      }
+    </section>
+  }
+
+  @if (pageId) {
     <section class="variants">
       <h3>Personalization variants</h3>
 

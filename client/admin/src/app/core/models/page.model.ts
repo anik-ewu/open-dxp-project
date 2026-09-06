@@ -20,7 +20,15 @@ export interface PageDetail {
   blocksJson: string;
   status: 'Draft' | 'Published';
   latestVersionNumber: number;
+  tags: string[];
   versions: PageVersion[];
+}
+
+export interface RelatedPage {
+  pageId: string;
+  slug: string;
+  title: string;
+  snippet: string;
 }
 
 export interface CreatePageRequest {

@@ -2,10 +2,11 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { PageDetail, PageVersion } from '../../core/models/page.model';
+import { PageDetail, PageVersion, RelatedPage } from '../../core/models/page.model';
 import { PageVariant, VariantAnalytics } from '../../core/models/page-variant.model';
 import { PageService } from '../../core/services/page.service';
 import { PersonalizationService } from '../../core/services/personalization.service';
+import { SearchService } from '../../core/services/search.service';
 
 @Component({
   selector: 'app-page-editor',
@@ -16,6 +17,7 @@ import { PersonalizationService } from '../../core/services/personalization.serv
 export class PageEditorComponent implements OnInit {
   private readonly pageService = inject(PageService);
   private readonly personalizationService = inject(PersonalizationService);
+  private readonly searchService = inject(SearchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -25,6 +27,8 @@ export class PageEditorComponent implements OnInit {
   blocksJson = '[]';
   status: 'Draft' | 'Published' | null = null;
   versions: PageVersion[] = [];
+  tags: string[] = [];
+  relatedPages: RelatedPage[] = [];
   saving = false;
   error: string | null = null;
 
@@ -44,6 +48,7 @@ export class PageEditorComponent implements OnInit {
       this.pageService.getById(this.pageId).subscribe((page) => this.applyDetail(page));
       this.loadVariants();
       this.loadAnalytics();
+      this.loadRelatedPages();
     }
   }
 
@@ -101,6 +106,22 @@ export class PageEditorComponent implements OnInit {
     this.personalizationService.getAnalytics(this.pageId).subscribe((analytics) => (this.analytics = analytics));
   }
 
+  loadRelatedPages(): void {
+    if (!this.pageId) {
+      return;
+    }
+    this.searchService.getRelated(this.pageId).subscribe((related) => (this.relatedPages = related));
+  }
+
+  /** Tags and related pages are computed a few seconds after publish by Kafka consumers. */
+  refreshEnrichment(): void {
+    if (!this.pageId) {
+      return;
+    }
+    this.pageService.getById(this.pageId).subscribe((page) => this.applyDetail(page));
+    this.loadRelatedPages();
+  }
+
   createVariant(): void {
     if (!this.pageId) {
       return;
@@ -143,5 +164,6 @@ export class PageEditorComponent implements OnInit {
     this.blocksJson = page.blocksJson;
     this.status = page.status;
     this.versions = page.versions;
+    this.tags = page.tags;
   }
 }
