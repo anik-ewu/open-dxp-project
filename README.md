@@ -2,6 +2,8 @@
 
 A headless CMS + Digital Experience Platform, built incrementally to learn (and demonstrate) auth/authorization best practices, event-driven architecture with Kafka, DXP concepts (personalization, experimentation), and AI-driven content features — end to end from a bare API to a Kubernetes deployment.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for how it fits together and why — event flow diagrams, the transactional outbox rationale, the auth flow, and a few implementation details (pgvector + EF Core 8) that cost real debugging time.
+
 ## Stack
 
 - **Backend:** .NET 8, Clean Architecture (Domain / Application / Infrastructure / Api), CQRS via MediatR
