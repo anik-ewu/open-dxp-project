@@ -158,12 +158,27 @@ a `PublishPage` span nested in the HTTP request trace, and each Kafka consumer g
 consume span plus processed/failed counters - so a stalled consumer or a spike in failures is
 visible per group, not just as an aggregate "something's wrong."
 
+## Kubernetes
+
+`infra/helm/opendxp` deploys the full stack - API (with an HPA), Admin, a Postgres StatefulSet with
+a PVC, Redis, Redpanda - and unlike the Azure path, it's actually been installed on a real cluster
+(local minikube) and exercised end to end, not just statically validated. Doing so surfaced two
+bugs that reading the YAML wouldn't have caught: Redpanda tried to *bind* to its own Kubernetes
+Service's ClusterIP (which isn't a real interface inside the pod - that address belongs only on
+the *advertise* setting other clients use to reach it, a different concern from what the process
+binds locally), and every request 400'd under `ASPNETCORE_ENVIRONMENT=Production` because nothing
+was terminating TLS in front of the cluster - fixed by trusting `X-Forwarded-Proto` from the
+ingress via ASP.NET Core's `ForwardedHeaders` middleware, confirmed by testing the same request
+with and without that header.
+
 ## What's deliberately not here yet
 
 - **MFA and multi-tenant claims** (Phase 2) - not needed with a single admin team; the auth
   architecture (OIDC + policy-based authorization) extends to both without a redesign.
 - **LLM content assistant and real embeddings** (Phase 5) - both need a paid API key. The seams
   (`IEmbeddingService`, an equivalent interface for content generation) are already in place.
-- **Live cloud deployment** (Phase 6/7) - the IaC exists (`infra/`), but actually running it needs
-  real Azure credentials and explicit approval to spend money; that's a deliberate stopping point,
-  not an oversight.
+- **A real cloud deployment.** The Kubernetes path works on a real (local) cluster; AKS
+  specifically hasn't been tried (ingress class, storage class, and a real secret store all likely
+  need adjustment). The Azure Container Apps path (`infra/main.bicep`) is validated locally only -
+  actually running it needs real Azure credentials and explicit approval to spend money, which is
+  a deliberate stopping point, not an oversight.
