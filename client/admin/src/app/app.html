@@ -1,14 +1,28 @@
-<header class="app-header">
-  <h1>OpenDXP Admin</h1>
+<div class="min-h-screen bg-slate-50">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <a routerLink="/pages" class="flex items-center gap-2">
+        <span class="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-sm font-bold text-white">
+          DX
+        </span>
+        <span class="text-lg font-semibold text-slate-900">OpenDXP Admin</span>
+      </a>
 
-  @if (isAuthenticated) {
-    <span>{{ userProfile?.name }} ({{ userProfile?.roles?.join(', ') }})</span>
-    <button type="button" (click)="logout()">Log out</button>
-  } @else {
-    <button type="button" (click)="login()">Log in</button>
-  }
-</header>
+      @if (isAuthenticated) {
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="text-sm font-medium text-slate-900">{{ userProfile?.name }}</p>
+            <p class="text-xs text-slate-500">{{ userProfile?.roles?.join(', ') }}</p>
+          </div>
+          <button type="button" (click)="logout()" class="btn-secondary">Log out</button>
+        </div>
+      } @else {
+        <button type="button" (click)="login()" class="btn-primary">Log in</button>
+      }
+    </div>
+  </header>
 
-<main class="app-content">
-  <router-outlet />
-</main>
+  <main class="mx-auto max-w-6xl px-6 py-8">
+    <router-outlet />
+  </main>
+</div>

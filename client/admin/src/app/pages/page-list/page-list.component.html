@@ -1,33 +1,39 @@
-<div class="page-list">
-  <header>
-    <h2>Pages</h2>
-    <a routerLink="/pages/new">+ New page</a>
+<div>
+  <header class="mb-6 flex items-center justify-between">
+    <h2 class="text-2xl font-semibold text-slate-900">Pages</h2>
+    <a routerLink="/pages/new" class="btn-primary">+ New page</a>
   </header>
 
   @if (loading) {
-    <p>Loading...</p>
+    <div class="card text-center text-sm text-slate-500">Loading...</div>
   } @else if (pages.length === 0) {
-    <p>No pages yet.</p>
+    <div class="card text-center text-sm text-slate-500">No pages yet.</div>
   } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Slug</th>
-          <th>Status</th>
-          <th>Updated</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (page of pages; track page.id) {
+    <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-50">
           <tr>
-            <td><a [routerLink]="['/pages', page.id]">{{ page.title }}</a></td>
-            <td>{{ page.slug }}</td>
-            <td>{{ page.status }}</td>
-            <td>{{ page.updatedAt | date: 'short' }}</td>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Title</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Updated</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (page of pages; track page.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 text-sm">
+                <a [routerLink]="['/pages', page.id]" class="font-medium text-indigo-600 hover:text-indigo-500">{{ page.title }}</a>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">{{ page.slug }}</td>
+              <td class="px-4 py-3 text-sm">
+                <span [class]="page.status === 'Published' ? 'badge-published' : 'badge-draft'">{{ page.status }}</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">{{ page.updatedAt | date: 'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   }
 </div>
